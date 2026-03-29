@@ -1,6 +1,232 @@
 import { useState } from "react";
 import Icon from "@/components/ui/icon";
 
+const SERVICE_OPTIONS = [
+  "Устная консультация",
+  "Письменная консультация",
+  "Составление заявления / жалобы",
+  "Составление искового заявления",
+  "Составление договора",
+  "Представление интересов в суде",
+  "Исполнительное производство",
+  "Другое",
+];
+
+const TIME_OPTIONS = [
+  "9:00–11:00",
+  "11:00–13:00",
+  "13:00–15:00",
+  "15:00–17:00",
+  "17:00–19:00",
+];
+
+interface FormData {
+  name: string;
+  phone: string;
+  service: string;
+  time: string;
+  comment: string;
+}
+
+function BookingModal({ onClose }: { onClose: () => void }) {
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [form, setForm] = useState<FormData>({
+    name: "",
+    phone: "",
+    service: "",
+    time: "",
+    comment: "",
+  });
+
+  const set = (field: keyof FormData, value: string) =>
+    setForm((f) => ({ ...f, [field]: value }));
+
+  const canNext1 = form.service !== "";
+  const canNext2 = form.name.trim() !== "" && form.phone.trim().length >= 10;
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" />
+      <div className="relative bg-white w-full max-w-lg animate-scale-in shadow-2xl">
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-8 pt-8 pb-6 border-b border-gray-100">
+          <div>
+            <p className="text-xs tracking-[0.2em] uppercase text-gray-400 mb-1">
+              Запись на консультацию
+            </p>
+            <div className="flex gap-2 mt-2">
+              {[1, 2, 3].map((s) => (
+                <div
+                  key={s}
+                  className={`h-0.5 w-8 transition-all duration-300 ${
+                    s <= step ? "bg-gray-900" : "bg-gray-200"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-900 transition-colors"
+          >
+            <Icon name="X" size={20} />
+          </button>
+        </div>
+
+        <div className="px-8 py-8">
+          {/* Step 1 — choose service */}
+          {step === 1 && (
+            <div className="animate-fade-in">
+              <h3 className="font-serif text-2xl text-gray-900 mb-6">
+                Какая помощь нужна?
+              </h3>
+              <div className="grid grid-cols-2 gap-2">
+                {SERVICE_OPTIONS.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => set("service", s)}
+                    className={`text-left text-sm px-4 py-3 border transition-all duration-150 leading-snug ${
+                      form.service === s
+                        ? "border-gray-900 bg-gray-900 text-white"
+                        : "border-gray-200 text-gray-700 hover:border-gray-400"
+                    }`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Step 2 — name & phone */}
+          {step === 2 && (
+            <div className="animate-fade-in space-y-5">
+              <h3 className="font-serif text-2xl text-gray-900 mb-6">
+                Ваши контакты
+              </h3>
+              <div>
+                <label className="text-xs tracking-widest uppercase text-gray-400 block mb-2">
+                  Имя
+                </label>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => set("name", e.target.value)}
+                  placeholder="Иван Иванов"
+                  className="w-full border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-gray-900 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-xs tracking-widest uppercase text-gray-400 block mb-2">
+                  Телефон
+                </label>
+                <input
+                  type="tel"
+                  value={form.phone}
+                  onChange={(e) => set("phone", e.target.value)}
+                  placeholder="+7 (___) ___-__-__"
+                  className="w-full border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-gray-900 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-xs tracking-widest uppercase text-gray-400 block mb-2">
+                  Удобное время
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {TIME_OPTIONS.map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => set("time", t)}
+                      className={`text-xs px-3 py-2 border transition-all duration-150 ${
+                        form.time === t
+                          ? "border-gray-900 bg-gray-900 text-white"
+                          : "border-gray-200 text-gray-600 hover:border-gray-400"
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs tracking-widets uppercase text-gray-400 block mb-2">
+                  Комментарий{" "}
+                  <span className="text-gray-300 normal-case tracking-normal">
+                    (необязательно)
+                  </span>
+                </label>
+                <textarea
+                  value={form.comment}
+                  onChange={(e) => set("comment", e.target.value)}
+                  placeholder="Коротко опишите ситуацию..."
+                  rows={3}
+                  className="w-full border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-gray-900 transition-colors resize-none"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Step 3 — success */}
+          {step === 3 && (
+            <div className="animate-fade-in text-center py-6">
+              <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-6">
+                <Icon name="Check" size={26} className="text-gray-900" />
+              </div>
+              <h3 className="font-serif text-2xl text-gray-900 mb-3">
+                Заявка принята
+              </h3>
+              <p className="text-sm text-gray-500 leading-relaxed max-w-xs mx-auto mb-2">
+                Мы позвоним вам на номер <span className="text-gray-900 font-medium">{form.phone}</span> в течение рабочего дня и подтвердим запись.
+              </p>
+              {form.time && (
+                <p className="text-xs text-gray-400 mt-1">
+                  Предпочтительное время: {form.time}
+                </p>
+              )}
+              <button
+                onClick={onClose}
+                className="mt-8 bg-gray-900 text-white text-sm px-8 py-3 hover:bg-gray-700 transition-colors tracking-wide"
+              >
+                Закрыть
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Footer nav */}
+        {step < 3 && (
+          <div className="px-8 pb-8 flex items-center justify-between">
+            {step === 2 ? (
+              <button
+                onClick={() => setStep(1)}
+                className="text-sm text-gray-400 hover:text-gray-900 transition-colors flex items-center gap-1"
+              >
+                <Icon name="ChevronLeft" size={14} />
+                Назад
+              </button>
+            ) : (
+              <div />
+            )}
+            <button
+              onClick={() => {
+                if (step === 1 && canNext1) setStep(2);
+                if (step === 2 && canNext2) setStep(3);
+              }}
+              disabled={step === 1 ? !canNext1 : !canNext2}
+              className="bg-gray-900 text-white text-sm px-8 py-3 hover:bg-gray-700 transition-colors tracking-wide disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              {step === 1 ? "Далее" : "Отправить заявку"}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const NAV_LINKS = [
   { label: "О нас", href: "#about" },
   { label: "Услуги", href: "#services" },
@@ -129,6 +355,7 @@ export default function Index() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [openTemplate, setOpenTemplate] = useState<number | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [bookingOpen, setBookingOpen] = useState(false);
 
   const scrollTo = (href: string) => {
     setMenuOpen(false);
@@ -137,6 +364,7 @@ export default function Index() {
 
   return (
     <div className="font-sans bg-white text-gray-900 min-h-screen">
+      {bookingOpen && <BookingModal onClose={() => setBookingOpen(false)} />}
       {/* HEADER */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -200,7 +428,7 @@ export default function Index() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
             <button
-              onClick={() => scrollTo("#contacts")}
+              onClick={() => setBookingOpen(true)}
               className="bg-gray-900 text-white text-sm px-8 py-4 hover:bg-gray-700 transition-colors tracking-wide"
             >
               Получить консультацию
@@ -399,6 +627,13 @@ export default function Index() {
                   <span>Пн–Пт: 9:00–19:00 · Сб: 10:00–15:00</span>
                 </div>
               </div>
+              <button
+                onClick={() => setBookingOpen(true)}
+                className="mt-8 bg-gray-900 text-white text-sm px-8 py-4 hover:bg-gray-700 transition-colors tracking-wide inline-flex items-center gap-2"
+              >
+                <Icon name="CalendarDays" size={16} />
+                Записаться онлайн
+              </button>
             </div>
             <div className="overflow-hidden h-72 lg:h-auto min-h-64 bg-gray-100">
               <iframe
