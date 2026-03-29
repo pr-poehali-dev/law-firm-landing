@@ -28,8 +28,12 @@ interface FormData {
   comment: string;
 }
 
+const BOOKING_URL = "https://functions.poehali.dev/2275b13d-0ed3-4018-8dc2-b70110e39d6b";
+
 function BookingModal({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<FormData>({
     name: "",
     phone: "",
@@ -43,6 +47,24 @@ function BookingModal({ onClose }: { onClose: () => void }) {
 
   const canNext1 = form.service !== "";
   const canNext2 = form.name.trim() !== "" && form.phone.trim().length >= 10;
+
+  const submit = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(BOOKING_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) throw new Error("Ошибка сервера");
+      setStep(3);
+    } catch {
+      setError("Не удалось отправить заявку. Позвоните нам по телефону.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div
@@ -210,16 +232,27 @@ function BookingModal({ onClose }: { onClose: () => void }) {
             ) : (
               <div />
             )}
-            <button
-              onClick={() => {
-                if (step === 1 && canNext1) setStep(2);
-                if (step === 2 && canNext2) setStep(3);
-              }}
-              disabled={step === 1 ? !canNext1 : !canNext2}
-              className="bg-gray-900 text-white text-sm px-8 py-3 hover:bg-gray-700 transition-colors tracking-wide disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              {step === 1 ? "Далее" : "Отправить заявку"}
-            </button>
+            <div className="flex flex-col items-end gap-2">
+              {error && (
+                <p className="text-xs text-red-500 text-right max-w-xs">{error}</p>
+              )}
+              <button
+                onClick={() => {
+                  if (step === 1 && canNext1) setStep(2);
+                  if (step === 2 && canNext2) submit();
+                }}
+                disabled={loading || (step === 1 ? !canNext1 : !canNext2)}
+                className="bg-gray-900 text-white text-sm px-8 py-3 hover:bg-gray-700 transition-colors tracking-wide disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {loading && (
+                  <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
+                )}
+                {step === 1 ? "Далее" : loading ? "Отправка..." : "Отправить заявку"}
+              </button>
+            </div>
           </div>
         )}
       </div>
